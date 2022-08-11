@@ -1,0 +1,8 @@
+Dores,Santa Maria Centro,Santa Maria Castelinho,2,3.9,3,0
+Perau - sobe,Santa Maria Centro,Itaara Fim do Perau,1,8.9,1,0
+Perau - desce,Itaara Fim do Perau,Santa Maria Centro,1,8.9,3,0
+Fernando Ferrari,Santa Maria Centro,Santa Maria Cerrito,2,2.5,3,0
+Faixa Nova,Santa Maria Cerrito,Santa Maria Roraima,2,7.7,4,0
+Faixa Velha,Santa Maria Castelinho,Santa Maria Roraima,2,6.6,5,0
+BR158,Santa Maria Castelinho,Santa Maria Cerrito,2,2,5,0
+BR158,Santa Maria Castelinho,Itaara Fim do Perau,2,8.9,4,0
