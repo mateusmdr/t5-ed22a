@@ -1,7 +1,9 @@
 LIBS  = -lm
 CFLAGS = -Wall
 
-OBJ = main.o
+OBJ = main.o  \
+	  lista.o \
+	  tipos.o \
 
 SRCS = $(OBJ:%.o=%.c)
 
