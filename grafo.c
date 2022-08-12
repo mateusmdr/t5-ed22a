@@ -1,5 +1,6 @@
 #include <stdbool.h>
 
+#include "lista.h"
 #include "grafo.h"
 
 typedef struct {

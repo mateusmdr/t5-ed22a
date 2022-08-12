@@ -1,7 +1,8 @@
 #ifndef TIPOS_H
 #define TIPOS_H
+    #include "grafo.h"
 
-    typedef int dado_t;
+    typedef struct aresta_t dado_t;
 
     void imprime_dado(dado_t dado);
     void libera_dado(dado_t dado);
