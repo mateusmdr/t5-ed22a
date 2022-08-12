@@ -39,15 +39,17 @@ bool lista_insere(lista_t *l, int pos, dado_t d)
     }
 
     int cont = 0;
+    no_t* ant;
     no_t* it = l->prim;
-    while(it->prox != NULL && cont + 1 < pos) {
+    while(it != NULL && (cont < pos || pos == -1)) {
         cont++;
+        ant = it;
         it = it->prox;
     }
+    if(pos == -1 || cont == pos) { // Está na posição de inserção
+        ant->prox = novo;
+        novo->prox = it;
 
-    if(cont + 1 == pos) { // Está um antes da posição que devemos inserir
-        novo->prox = it->prox;
-        it->prox = novo;
         return true;
     }
 
@@ -58,15 +60,29 @@ bool lista_remove(lista_t *l, int pos)
 {
     if(lista_vazia(l)) return false;
 
-    int cont = 0;
-    no_t* atual = l->prim;
-    while(atual != NULL && cont < pos) {
-        cont++;
-        atual = atual->prox;
+    if(pos == 0) {
+        no_t* vitima = l->prim;
+        l->prim = vitima->prox;
+
+        libera_dado(vitima->dado);
+        free(vitima);
+
+        return true;
     }
 
-    if(cont == pos) {
-        free(atual);
+    int cont = 0;
+    no_t* it = l->prim;
+    no_t* ant;
+    while(it->prox != NULL && (cont < pos || pos == -1)) {
+        cont++;
+        ant = it;
+        it = it->prox;
+    }
+
+    if(pos == -1 || cont == pos) { // Está na posição a ser removida
+        ant->prox = it->prox;
+        libera_dado(it->dado);
+        free(it);
         return true;
     }
 
@@ -88,15 +104,21 @@ bool lista_vazia(lista_t *l) {
 bool lista_dado(lista_t *l, int pos, dado_t *pd)
 {
     if(lista_vazia(l)) return false;
-    int cont = 0;
-    no_t* atual = l->prim;
-    while(atual->prox != NULL && cont < pos) {
-        cont++;
-        atual = atual->prox;
+
+    if(pos == 0) {
+        *pd = l->prim->dado;
+        return true;
     }
 
-    if(cont == pos) {
-        *pd = atual->dado;
+    int cont = 0;
+    no_t* it = l->prim;
+    while(it->prox != NULL && (cont < pos || pos == -1)) {
+        cont++;
+        it = it->prox;
+    }
+
+    if(pos == -1 || cont == pos) { // Está na posição a ser removida
+        *pd = it->dado;
         return true;
     }
 
@@ -105,7 +127,7 @@ bool lista_dado(lista_t *l, int pos, dado_t *pd)
 
 void lista_imprime(lista_t* l) {
     no_t* atual = l->prim;
-    while(atual->prox != NULL) {
+    while(atual != NULL) {
         imprime_dado(atual->dado);
         atual = atual->prox;
     }

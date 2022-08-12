@@ -14,9 +14,9 @@ void lista_destroi(lista_t *l);
 bool lista_vazia(lista_t *l);
 // coloca em *pd o dado na posição pos da lista l sem removê-lo, retorna TRUE se bem-sucedido
 bool lista_dado(lista_t *l, int pos, dado_t *pd);
-// insere d na posicao pos da lista l, retorna TRUE se bem-sucedido
+// insere d na posicao pos da lista l (começando do 0, -1 para último), retorna TRUE se bem-sucedido
 bool lista_insere(lista_t *l, int pos, dado_t d);
-// remove o dado na posição pos da lista l (começando do 0), retorna TRUE se bem-sucedido
+// remove o dado na posição pos da lista l (começando do 0, -1 para último), retorna TRUE se bem-sucedido
 bool lista_remove(lista_t *l, int pos);
 // imprime toda a lista
 void lista_imprime(lista_t* l);
