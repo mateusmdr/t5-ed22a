@@ -17,8 +17,8 @@ typedef struct edb edb_t;
 edb_t *edb_cria(void);
 void edb_destroi(edb_t *edb);
 
-// insere o valor associado a chave
-void edb_insere(edb_t *edb, chave_t chave, valor_t valor);
+// insere o valor associado a chave (retorna false caso já exista)
+bool edb_insere(edb_t *edb, chave_t chave, valor_t valor);
 // remove o valor associado a chave
 void edb_remove(edb_t *edb, chave_t chave);
 // retorna (por ref.) o valor associado a chave (e true) ou nao (e false)

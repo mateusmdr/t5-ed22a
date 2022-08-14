@@ -9,4 +9,5 @@ add_executable(main
         main.c
         lista.c
         tipos.c
-        grafo.c)
+        grafo.c
+        edb.c)

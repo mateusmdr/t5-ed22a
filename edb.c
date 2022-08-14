@@ -171,19 +171,19 @@ no_t* menor_no(no_t* no) {
 }
 
 // Insere um valor na árvore, respeitando a hierarquia e retorna um ponteiro para o nó inserido
-no_t* arv_insere(no_t* no, chave_t chave, valor_t valor) {
+no_t* arv_insere(no_t* no, chave_t chave, valor_t valor, bool* inserido) {
     if(arv_vazia(no)){
         no = arv_cria(valor);
         return no;
     }
 
     int comp = compara_chave_valor(chave, no->valor);
-    if(comp == 0) { // Substitui o valor do nó atual
-        no->valor = valor;
+    if(comp == 0) { // Não faz nada (valor já existente)
+        *inserido = false;
     }else if(comp < 0) {
-        no->esq = arv_insere(no->esq, chave, valor);
+        no->esq = arv_insere(no->esq, chave, valor, inserido);
     }else {
-        no->dir = arv_insere(no->dir, chave, valor);
+        no->dir = arv_insere(no->dir, chave, valor, inserido);
     }
 
     return arv_equilibra(no);
@@ -262,8 +262,11 @@ void edb_destroi(edb_t *edb) {
 }
 
 // Insere o valor associado à chave
-void edb_insere(edb_t *edb, chave_t chave, valor_t valor) {
-    edb->raiz = arv_insere(edb->raiz, chave, valor);
+bool edb_insere(edb_t *edb, chave_t chave, valor_t valor) {
+    bool inserido = true;
+    edb->raiz = arv_insere(edb->raiz, chave, valor, &inserido);
+
+    return inserido;
 }
 
 // Remove o valor associado à chave

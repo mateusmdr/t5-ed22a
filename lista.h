@@ -3,9 +3,8 @@
 
 #include <stdbool.h>
 
-#include "tipos.h"
-
 typedef struct lista lista_t;
+typedef struct aresta dado_t; // Define o tipo de dados da lista
 
 lista_t* lista_cria();
 void lista_destroi(lista_t *l);
