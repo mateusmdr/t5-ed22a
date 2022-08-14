@@ -5,7 +5,7 @@
 typedef struct {
     char trecho[64];
     float distancia;
-    unsigned int classe;
+    int classe;
     float despesas;
 } rodovia_t;
 
