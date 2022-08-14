@@ -57,8 +57,10 @@ void grafo_carrega_linha(grafo_t* grafo, char* linha) {
     /**
     * Divide a linha em cada entrada separada por vírgula
     */
+    char* token = strtok(linha, ",");
     for(int entrada = 0; entrada < 7; entrada++){
-        posicoes[entrada] = strtok(linha, ",");
+        posicoes[entrada] = token;
+        token = strtok(NULL, ",");
     }
 
     valor_t origem, destino;
@@ -103,8 +105,7 @@ void grafo_carrega(grafo_t* grafo, char* nome) {
     FILE* arquivo = fopen(nome, "r");
     if(arquivo == NULL) return;
     char linha[256];
-    while(!feof(arquivo)) {
-        fgets(linha, sizeof(linha)-1, arquivo);
+    while(fgets(linha, sizeof(linha)-1, arquivo) != NULL) {
         grafo_carrega_linha(grafo, linha);
     }
 
