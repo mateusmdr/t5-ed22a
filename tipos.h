@@ -11,7 +11,10 @@ typedef struct {
 
 typedef struct aresta aresta_t;
 
+typedef char* chave_t;
+
 typedef struct {
+    chave_t nome;
     bool visitado;
     lista_t* arestas;
 } vertice_t;
@@ -26,8 +29,6 @@ struct aresta {
  */
 void imprime_dado(dado_t dado);
 void libera_dado(dado_t dado);
-
-typedef char chave_t[64];
 
 typedef struct {
     int posicao;

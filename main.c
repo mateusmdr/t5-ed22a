@@ -1,30 +1,35 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "grafo.h"
 
 int main() {
-    float preco_combustivel;
-    printf("Qual o preço do combustível (R$) ? ");
-    scanf("%f", &preco_combustivel);
+    char input[64];
+    printf("Qual o preço do combustível (R$/L) ? ");
+    fgets(input, sizeof(input) - 1, stdin);
+    float preco_combustivel = atof(input);
 
     grafo_t* grafo = grafo_cria(10);
     grafo_carrega(grafo, "entrada.txt");
 
-    chave_t origem, destino;
+    char origem[64], destino[64];
     char resposta;
 
     while(true) {
-        printf("Qual a cidade de origem ? ");
-        scanf("%s", origem);
-        printf("Qual a cidade de destino ? ");
-        scanf("%s", destino);
+        fflush(stdin);
+        printf("Qual a origem ? ");
+        fgets(origem, sizeof(origem) - 1, stdin);
+        origem[strlen(origem)-1] = '\0';
+        printf("Qual o destino ? ");
+        fgets(destino, sizeof(destino) - 1, stdin);
+        destino[strlen(destino)-1] = '\0';
 
-        grafo_menor_custo(grafo);
-        grafo_menor_tempo(grafo);
-        grafo_menor_distancia(grafo);
+        grafo_menor_custo(grafo, origem, destino, preco_combustivel);
+        grafo_menor_tempo(grafo, origem, destino);
+        grafo_menor_distancia(grafo, origem, destino);
 
         printf("Deseja fazer mais alguma consulta (S/N) ? ");
-        scanf(" %c", &resposta);
+        resposta = (char)fgetc(stdin);
         if(resposta == 'N' || resposta == 'n') break;
     }
 

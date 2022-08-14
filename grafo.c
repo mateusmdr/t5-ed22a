@@ -7,6 +7,7 @@
 
 #include "grafo.h"
 #include "edb.h"
+#include "pilha.h"
 
 struct grafo {
     int max_vertices;
@@ -28,6 +29,7 @@ grafo_t* grafo_cria(int max_vertices) {
         vertice_t vertice;
         vertice.arestas = lista_cria(); // Cria uma lista de arestas (vazia) para cada vértice
         vertice.visitado = false;
+        vertice.nome = NULL;
 
         grafo->vertices[i] = vertice;
     }
@@ -39,6 +41,7 @@ void grafo_destroi(grafo_t* grafo) {
     for(int i=0; i < grafo->max_vertices; i++) {
         vertice_t vertice = grafo->vertices[i];
         lista_destroi(vertice.arestas); // Destroi a lista de arestas para cada vértice
+        free(vertice.nome);
     }
 
     edb_destroi(grafo->edb);
@@ -62,8 +65,8 @@ void grafo_carrega_linha(grafo_t* grafo, char* linha) {
 
     valor_t origem, destino;
     strcpy(info.trecho, posicoes[0]);
-    strcpy(origem.nome, posicoes[1]);
-    strcpy(destino.nome, posicoes[2]);
+    origem.nome = strdup(posicoes[1]);
+    destino.nome = strdup(posicoes[2]);
     bool dupla = atoi(posicoes[3]) == 2;
     info.distancia = atof(posicoes[4]);
     info.classe = atoi(posicoes[5]);
@@ -73,12 +76,20 @@ void grafo_carrega_linha(grafo_t* grafo, char* linha) {
     origem.posicao = grafo->total_vertices;
 
     if(edb_insere(grafo->edb, origem.nome, origem)) { // Insere o vértice de origem, caso não exista
+        grafo->vertices[origem.posicao].nome = origem.nome;
         grafo->total_vertices++;
+    }else {
+        free(origem.nome);
+        origem.nome = posicoes[1];
     }
 
     destino.posicao = grafo->total_vertices;
     if(edb_insere(grafo->edb, destino.nome, destino)) { // Insere o vértice de destino, caso não exista
+        grafo->vertices[destino.posicao].nome = destino.nome;
         grafo->total_vertices++;
+    }else {
+        free(destino.nome);
+        destino.nome = posicoes[1];
     }
 
     // Inserção das arestas:
@@ -113,7 +124,7 @@ int vertice_encontra(grafo_t* grafo, char* nome) {
     valor_t vertice;
     if(!edb_busca(grafo->edb, nome, &vertice)) {
         printf("Erro: cidade não encontrada!");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     return vertice.posicao;
@@ -122,6 +133,7 @@ int vertice_encontra(grafo_t* grafo, char* nome) {
 typedef struct {
     float* distancia;
     int* pai;
+    int n_vertices;
 } dijkstra_t;
 
 /**
@@ -133,8 +145,8 @@ typedef struct {
 dijkstra_t dijkstra(grafo_t* grafo, int origem, float(*peso)(aresta_t)) {
     int total_vertices = grafo->total_vertices;
     vertice_t* vertices = grafo->vertices;
-    float distancia[total_vertices];
-    int pai[total_vertices];
+    float* distancia = malloc(sizeof(float) * total_vertices);
+    int* pai = malloc(sizeof(int) * total_vertices);
 
     /**
      * Inicia os nós como não visitados, com distância infinita
@@ -146,7 +158,6 @@ dijkstra_t dijkstra(grafo_t* grafo, int origem, float(*peso)(aresta_t)) {
     }
     // Exceto o nó de origem
     distancia[origem] = 0;
-    vertices[origem].visitado = true;
 
     int visitados = 0;
     while(visitados < total_vertices) {
@@ -174,16 +185,14 @@ dijkstra_t dijkstra(grafo_t* grafo, int origem, float(*peso)(aresta_t)) {
         }
     }
     dijkstra_t resultado;
-    resultado.pai = malloc(sizeof(int) * total_vertices);
-    resultado.distancia = malloc(sizeof(float) * total_vertices);
-
-    memcpy(resultado.pai, pai, sizeof(int) * total_vertices);
-    memcpy(resultado.distancia, distancia, sizeof(float) * total_vertices);
+    resultado.pai = pai;
+    resultado.distancia = distancia;
+    resultado.n_vertices = total_vertices;
 
     return resultado;
 }
 
-float get_consumo_aresta(aresta_t aresta) {
+float calcula_consumo_aresta(aresta_t aresta) {
     /**
      * Para o cálculo do custo em R$, considere os pedágios e o consumo de combustível médio,
      * que varia de acordo com a classe do trecho, entre 12km/l para a classe 5 e
@@ -191,10 +200,10 @@ float get_consumo_aresta(aresta_t aresta) {
      */
     int consumo = 12 - (5 - aresta.info.classe);
 
-    return aresta.info.despesas;
+    return consumo;
 }
 
-float get_tempo_aresta(aresta_t aresta) {
+float calcula_tempo_aresta(aresta_t aresta) {
     /**
      * Para o cálculo do custo em tempo,
      * considere que a velocidade média de acordo com a classe do trecho, 100km/h para classe 5 e
@@ -205,8 +214,33 @@ float get_tempo_aresta(aresta_t aresta) {
     return aresta.info.distancia / (float)velocidade;
 }
 
-float get_distancia_aresta(aresta_t aresta) {
+float calcula_distancia_aresta(aresta_t aresta) {
     return aresta.info.distancia;
+}
+
+void imprime_caminho(grafo_t* grafo, dijkstra_t resultado, int origem, int destino) {
+    pilha_t* caminho = pilha_cria();
+    int vertice = resultado.pai[destino];
+    float custo = 0;
+    while(vertice != -1) { // Para ao chegar à origem (faz o caminho oposto)
+        pilha_insere(caminho, vertice);
+        vertice = resultado.pai[vertice];
+    }
+    pilha_insere(caminho, origem);
+
+    int a,b;
+    a = origem;
+    vertice_t* vertices = grafo->vertices;
+    pilha_imprime(caminho);
+    while(!pilha_vazia(caminho)) { // Imprime os caminhos intermediários entre 'origem' e 'destino'
+        b = pilha_remove(caminho);
+
+        aresta_t rodovia;
+        for(int i=0; lista_dado(vertices[a].arestas, i, &rodovia) && rodovia.destino != b; i++){}
+
+        printf("De: %s, Para: %s, Trecho: %s\n", vertices[a].nome, vertices[b].nome, rodovia.info.trecho);
+        a = b;
+    }
 }
 
 // Consulta e imprime o menor caminho e o custo total baseado no custo (em reais) da viagem
@@ -214,15 +248,33 @@ void grafo_menor_custo(grafo_t* grafo, char* nome_origem, char* nome_destino, fl
     int origem = vertice_encontra(grafo, nome_origem);
     int destino = vertice_encontra(grafo, nome_destino);
 
-    dijkstra(grafo, origem, get_consumo_aresta);
+    dijkstra_t resultado = dijkstra(grafo, origem, calcula_consumo_aresta);
+    for(int i=0; i < grafo->total_vertices; i++) { // Multiplica todos os valores (em L) pelo preço do combustível
+        resultado.distancia[i] *= preco_combustivel;
+    }
+
+    printf("Caminho de menor custo (R$):\n");
+    imprime_caminho(grafo, resultado, origem, destino);
 }
 
-// Consulta e imprime o menor caminho e o custo total baseado no custo (em reais) da tempo
-void grafo_menor_tempo(grafo_t* grafo, char* origem, char* destino) {
+// Consulta e imprime o menor caminho e o custo total baseado no tempo para chegar da origem ao destino
+void grafo_menor_tempo(grafo_t* grafo, char* nome_origem, char* nome_destino) {
+    int origem = vertice_encontra(grafo, nome_origem);
+    int destino = vertice_encontra(grafo, nome_destino);
 
+    dijkstra_t resultado = dijkstra(grafo, origem, calcula_tempo_aresta);
+
+    printf("Caminho mais rápido:\n");
+    imprime_caminho(grafo, resultado, origem, destino);
 }
 
-// Consulta e imprime o menor caminho e o custo total baseado no custo (em reais) da distancia
-void grafo_menor_distancia(grafo_t* grafo, char* origem, char* destino) {
+// Consulta e imprime o menor caminho e o custo total baseado na distância percorrida
+void grafo_menor_distancia(grafo_t* grafo, char* nome_origem, char* nome_destino) {
+    int origem = vertice_encontra(grafo, nome_origem);
+    int destino = vertice_encontra(grafo, nome_destino);
 
+    dijkstra_t resultado = dijkstra(grafo, origem, calcula_distancia_aresta);
+
+    printf("Caminho mais próximo:\n");
+    imprime_caminho(grafo, resultado, origem, destino);
 }
