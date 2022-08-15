@@ -9,6 +9,7 @@
 #include "edb.h"
 #include "pilha.h"
 
+
 struct grafo {
     int max_vertices;
     int total_vertices;
@@ -89,7 +90,7 @@ void grafo_carrega_linha(grafo_t* grafo, char* linha) {
         grafo->total_vertices++;
     }else {
         free(destino.nome);
-        destino.nome = posicoes[1];
+        destino.nome = posicoes[2];
     }
 
     // Inserção das arestas:
@@ -133,7 +134,6 @@ int vertice_encontra(grafo_t* grafo, char* nome) {
 typedef struct {
     float* distancia;
     int* pai;
-    int n_vertices;
 } dijkstra_t;
 
 /**
@@ -187,9 +187,19 @@ dijkstra_t dijkstra(grafo_t* grafo, int origem, float(*peso)(aresta_t)) {
     dijkstra_t resultado;
     resultado.pai = pai;
     resultado.distancia = distancia;
-    resultado.n_vertices = total_vertices;
 
     return resultado;
+}
+
+void libera_resultado(dijkstra_t resultado) {
+    free(resultado.distancia);
+    free(resultado.pai);
+}
+
+float preco_combustivel;
+
+void set_preco_combustivel(float preco) {
+    preco_combustivel = preco;
 }
 
 float calcula_consumo_aresta(aresta_t aresta) {
@@ -198,9 +208,9 @@ float calcula_consumo_aresta(aresta_t aresta) {
      * que varia de acordo com a classe do trecho, entre 12km/l para a classe 5 e
      * 1 km/l a menos para cada classe subsequente.
      */
-    int consumo = 12 - (5 - aresta.info.classe);
+    float consumo = (float)(12 - (5 - aresta.info.classe)) * preco_combustivel;
 
-    return consumo;
+    return consumo + aresta.info.despesas;
 }
 
 float calcula_tempo_aresta(aresta_t aresta) {
@@ -211,7 +221,7 @@ float calcula_tempo_aresta(aresta_t aresta) {
      */
     int velocidade = 100 - 12 * (5 - aresta.info.classe);
 
-    return aresta.info.distancia / (float)velocidade;
+    return (aresta.info.distancia / (float)velocidade) * 60;
 }
 
 float calcula_distancia_aresta(aresta_t aresta) {
@@ -220,41 +230,42 @@ float calcula_distancia_aresta(aresta_t aresta) {
 
 void imprime_caminho(grafo_t* grafo, dijkstra_t resultado, int origem, int destino) {
     pilha_t* caminho = pilha_cria();
-    int vertice = resultado.pai[destino];
-    float custo = 0;
-    while(vertice != -1) { // Para ao chegar à origem (faz o caminho oposto)
+    int vertice = destino;
+    float custo = resultado.distancia[vertice];
+    while(vertice != origem) { // Para ao chegar à origem (faz o caminho oposto)
         pilha_insere(caminho, vertice);
         vertice = resultado.pai[vertice];
     }
-    pilha_insere(caminho, origem);
 
     int a,b;
     a = origem;
     vertice_t* vertices = grafo->vertices;
-    pilha_imprime(caminho);
     while(!pilha_vazia(caminho)) { // Imprime os caminhos intermediários entre 'origem' e 'destino'
         b = pilha_remove(caminho);
 
         aresta_t rodovia;
-        for(int i=0; lista_dado(vertices[a].arestas, i, &rodovia) && rodovia.destino != b; i++){}
+        for(int i=0; lista_dado(vertices[a].arestas, i, &rodovia) && rodovia.destino != b; i++);
 
-        printf("De: %s, Para: %s, Trecho: %s\n", vertices[a].nome, vertices[b].nome, rodovia.info.trecho);
+        printf("Trecho: %s | %s - %s\n", rodovia.info.trecho, vertices[a].nome, vertices[b].nome);
         a = b;
     }
+    printf("TOTAL: %f", custo);
+
+    pilha_destroi(caminho);
 }
 
 // Consulta e imprime o menor caminho e o custo total baseado no custo (em reais) da viagem
-void grafo_menor_custo(grafo_t* grafo, char* nome_origem, char* nome_destino, float preco_combustivel) {
+void grafo_menor_custo(grafo_t* grafo, char* nome_origem, char* nome_destino) {
     int origem = vertice_encontra(grafo, nome_origem);
     int destino = vertice_encontra(grafo, nome_destino);
 
     dijkstra_t resultado = dijkstra(grafo, origem, calcula_consumo_aresta);
-    for(int i=0; i < grafo->total_vertices; i++) { // Multiplica todos os valores (em L) pelo preço do combustível
-        resultado.distancia[i] *= preco_combustivel;
-    }
 
-    printf("Caminho de menor custo (R$):\n");
+    printf("Caminho de menor custo:\n");
     imprime_caminho(grafo, resultado, origem, destino);
+    printf(" (R$)\n");
+
+    libera_resultado(resultado);
 }
 
 // Consulta e imprime o menor caminho e o custo total baseado no tempo para chegar da origem ao destino
@@ -266,6 +277,7 @@ void grafo_menor_tempo(grafo_t* grafo, char* nome_origem, char* nome_destino) {
 
     printf("Caminho mais rápido:\n");
     imprime_caminho(grafo, resultado, origem, destino);
+    printf(" (min)\n");
 }
 
 // Consulta e imprime o menor caminho e o custo total baseado na distância percorrida
@@ -277,4 +289,5 @@ void grafo_menor_distancia(grafo_t* grafo, char* nome_origem, char* nome_destino
 
     printf("Caminho mais próximo:\n");
     imprime_caminho(grafo, resultado, origem, destino);
+    printf(" (km)\n");
 }

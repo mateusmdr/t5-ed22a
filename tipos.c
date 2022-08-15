@@ -5,7 +5,7 @@
 #include "tipos.h"
 
 void imprime_dado(dado_t dado) {
-    printf("%s\n", dado.destino);
+    printf("%i\n", dado.destino);
 }
 
 void libera_dado(dado_t dado) {
