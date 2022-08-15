@@ -278,6 +278,8 @@ void grafo_menor_tempo(grafo_t* grafo, char* nome_origem, char* nome_destino) {
     printf("Caminho mais rápido:\n");
     imprime_caminho(grafo, resultado, origem, destino);
     printf(" (min)\n");
+
+    libera_resultado(resultado);
 }
 
 // Consulta e imprime o menor caminho e o custo total baseado na distância percorrida
@@ -290,4 +292,6 @@ void grafo_menor_distancia(grafo_t* grafo, char* nome_origem, char* nome_destino
     printf("Caminho mais próximo:\n");
     imprime_caminho(grafo, resultado, origem, destino);
     printf(" (km)\n");
+
+    libera_resultado(resultado);
 }
